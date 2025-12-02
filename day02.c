@@ -4,23 +4,20 @@
 #include <stdlib.h>
 
 typedef unsigned long long uint64;
-typedef bool (*validator)(char* str, int len);
+typedef bool (*validator)(uint64 num);
 
-bool check_num_double(char* str, int len) {
-    if(len % 2 > 0) return false;
-
-    int substrlen = len / 2;
-    
-    for(int i = 0; i < substrlen; i++) {
-        if(str[i] != str[i + substrlen]) {
-            return false;
-        }
-    }
-    
-    return true;
+bool check_num_double(uint64 num) {
+    uint64 d = (int)log10((double)num) + 1;
+    uint64 de = (uint64)pow(10, d / 2);
+    return num / de == num % de;
 }
 
-bool check_num_any(char* str, int len) {
+bool check_num_any(uint64 num) {
+    int len = (int)log10((double)num) + 1;
+
+    char str[20];
+    sprintf(str, "%lld", num);
+
     for(int substrlen = 1; substrlen <= len / 2; substrlen++) {
         if(len % substrlen > 0)continue;
         int numslices = len / substrlen;
@@ -52,13 +49,9 @@ void run_with(const char* filename, validator fn) {
     uint64 to = 0;
     uint64 total = 0;
 
-    char buf[20];
     while(!feof(pInput) && fscanf(pInput, "%lld-%lld,", &from, &to)) {
         for(uint64 num = from; num <= to; num++) {
-            int len = (int)floor(log10((double)num)) + 1;
-            
-            sprintf(buf, "%lld", num);
-            if(fn(buf, len)) {
+            if(fn(num)) {
                 total += num;
             }
         }
