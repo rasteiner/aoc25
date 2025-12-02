@@ -1,10 +1,26 @@
 CC = gcc
 CFLAGS = -Wall -g -O2
 
-day01: day01.c
-	$(CC) $(CFLAGS) -o day01.exe day01.c
+SRCS = $(wildcard day*.c)
+PROGS = $(patsubst %.c,%.exe,$(SRCS))
+RUN_TARGETS = $(patsubst day%.c, run_day%, $(SRCS))
+
+# make all / or just make
+all: $(PROGS)
+
+# make day01.exe
+%.exe: %.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+# make run_day01
+run_%: %.exe
+	@echo Running $*...
+	./$< $*.test.txt
+
+run_all: $(RUN_TARGETS)
+
 
 clean:
-	del /Q day01.exe 2>nul || true
+	del /Q *.exe 2>nul || true
 
 .PHONY: clean
