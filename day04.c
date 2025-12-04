@@ -13,7 +13,6 @@ struct Field {
 
 struct Field parse(const char* filename) {
     char data[256][256];
-    char row[256];
     int h = 0, w = 0;
 
     FILE* pInput = fopen(filename, "r");
@@ -22,13 +21,13 @@ struct Field parse(const char* filename) {
         abort();
     }
     
-    while(fgets(row, sizeof row, pInput)) {
+    while(fgets(data[h], sizeof data[h], pInput)) {
         // trim
-        row[strcspn(row, "\r\n")] = 0;    
-        int len = strlen(row);
+        data[h][strcspn(data[h], "\r\n")] = 0;
+        int len = strlen(data[h]);
         if(len < 3) continue;
         if(len > w) w = len;
-        memcpy(data[h], row, len);
+        
         h += 1;
     }
     fclose(pInput);
