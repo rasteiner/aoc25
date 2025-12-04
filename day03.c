@@ -16,7 +16,7 @@ void part1(const char* filename) {
     long total = 0;
 
     while(fgets(row, sizeof row, pInput)) {
-        row[strcspn(row, "\n")] = 0;
+        row[strcspn(row, "\r\n")] = 0;
         int len = strlen(row);
         if(len < 2) continue;
 
@@ -76,7 +76,7 @@ void part2(const char* filename) {
 
 
     while(fgets(row, sizeof row, pInput)) {
-        row[strcspn(row, "\n")] = 0;
+        row[strcspn(row, "\r\n")] = 0;
         int len = strlen(row);
 
         if(len < 12) continue;
@@ -108,7 +108,7 @@ void part2(const char* filename) {
 }
 
 void printtime(struct timespec start, struct timespec end) {
-    printf("Took %.3f ms\n",(end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_nsec - start.tv_nsec) / 1000000.0);
+    printf("Took %.3lf ms\n",(end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_nsec - start.tv_nsec) / 1000000.0);
 }
 
 int main(int argc, char *argv[]) {
