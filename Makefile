@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -g -O3 -std=c17
+CFLAGS = -Wall -O3 -std=c17
 
 SRCS = $(wildcard day*.c)
 PROGS = $(patsubst %.c,%.exe,$(SRCS))

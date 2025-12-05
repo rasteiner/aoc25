@@ -102,7 +102,6 @@ void part2(struct Field data) {
                 int free = 0;
                 for(int dx = -1; dx <= 1; dx++) for(int dy = -1; dy <= 1; dy++) {
                     if(dy == 0 && dx == 0)continue;
-                    if(free > 4)break;
                     int gx = x + dx;
                     int gy = y + dy;
                     if(gy < 0 || gy >= h || gx < 0 || gx >= w || data.field[gy * w + gx] == false) free++;
