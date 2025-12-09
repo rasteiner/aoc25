@@ -3,10 +3,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
-
 #include "common.c"
 
-typedef unsigned long long uint64;
 
 struct Data {
     uint64 *ranges; // each range is 2 uint64
@@ -15,30 +13,62 @@ struct Data {
     int num_ids;
 };
 
-struct Data parse(const char* filename) {
-    FILE* pInput = fopen(filename, "r");
-    if(pInput == NULL) {
-        fprintf(stderr, "Invalid file: %s\n", filename);
-        abort();
-    }
 
+struct Data parse(char* input) {
     uint64 from, to;
-    char row[50];
+
     int num_ranges = 0;
     int capacity = 50;
     uint64 *ranges = malloc(capacity * sizeof(uint64) * 2);
 
+    // the next index for "things to insert"
     int index = 0;
+    
+    // point to the first char
+    char *c = input;
 
-    while(fgets(row, sizeof row, pInput)) {
-        // trim
-        row[strcspn(row, "\r\n")] = 0;
-        int len = strlen(row);
+    // go until we encounter the \0 terminator (or more probable the loop break below on a double new line)
+    while(*c) {
+        if (*c == '\r') {
+            // skip
+            c++;
+            continue;
+        }
+        if (*c == '\n') {
+            // if the next char is again \r or \n we have an empty line
+            // todo: bounds check? in theory there's ~always~ an empty line in the input files. 
+            char next = *(c+1);
+            if(next == '\n' || next == '\r') {
+                // then we have finished the ranges section
+                c++;
+                break;
+            }
 
-        // empty line means ranges are done
-        if(len == 0) break;
+            // otherwise skip
+            c++;
+        }
+        
+        // read a number
+        from = parse_num(&c);
+        if(from == 0) {
+            fprintf(stderr, "improbable range start 0\n");
+            exit(1);
+        }
 
-        sscanf(row, "%lld-%lld", &from, &to);
+        // read a "-"
+        if(*c != '-') {
+            fprintf(stderr, "expected '-' after %lld\n", from);
+        }
+        c++;
+
+        // read a number
+        to = parse_num(&c);
+        if(to == 0) {
+            fprintf(stderr, "improbable range end 0\n");
+            exit(1);
+        }
+        
+        // store 
         if(num_ranges >= capacity) {
             capacity *= 2;
             uint64 *tmp = realloc(ranges, capacity * sizeof(uint64) * 2);
@@ -50,28 +80,37 @@ struct Data parse(const char* filename) {
         num_ranges++;
     }
 
+    
     capacity = 100;
     index = 0;
     uint64 * ids = malloc(capacity * sizeof(uint64));
     uint64 id = 0;
     int num_ids = 0;
-
+    
     // read until end
-    while(fgets(row, sizeof row, pInput)) {
-        // trim
-        row[strcspn(row, "\r\n")] = 0;
-        sscanf(row, "%lld", &id);
+    while(*c) {
+        // skip newlines chars
+        if (*c == '\r' || *c == '\n') {
+            c++;
+            continue;
+        }
+    
+        // abort on invalid number
+        id = parse_num(&c);
+        if(id == 0) {
+            fprintf(stderr, "improbable id 0\n");
+            exit(1);
+        }
+
         if(num_ids >= capacity) {
             capacity *= 2;
             uint64 *tmp = realloc(ids, capacity * sizeof(uint64));
             ids = tmp;
         }
-        
+
         ids[index++] = id;
         num_ids++;
     }
-
-    fclose(pInput);
 
     struct Data d = {0};
     d.ranges = ranges;
@@ -100,9 +139,10 @@ int main(int argc, char** argv) {
     struct timespec start, end;
 
     timespec_get(&start, TIME_UTC);
-    struct Data d = parse(argv[1]);
-    printf("%d ranges and %d ids found\n", d.num_ranges, d.num_ids);
+    char * input = read_all(argv[1]);
+    struct Data d = parse(input);
     timespec_get(&end, TIME_UTC);
+    printf("%d ranges and %d ids found\n", d.num_ranges, d.num_ids);
     print_time("Parsing", start, end);
     
     /*
